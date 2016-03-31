@@ -368,7 +368,7 @@ int main(int argc, char** argv) {
 	try {
 		CmdLine cmd("Enter rates and stuff");
 		
-		ValueArg<int> numberOfSitesArg("n", "numberOfSites", "adsorption rate", true,40,"int");
+		ValueArg<int> numberOfSitesArg("n", "numberOfSites", "numberOfSites", true,40,"int");
 		cmd.add(numberOfSitesArg);
 		ValueArg<double> kaArg("a", "ka", "adsorption rate", true,0.1,"double");
 		cmd.add(kaArg);

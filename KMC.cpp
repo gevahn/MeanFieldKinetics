@@ -244,6 +244,8 @@ public:
 		normal_distribution<double> nd(mean, sigma);
 		
 		int currentGridPoint = 0;	
+		k1max = 0;
+		k1min = exp(mean);
 	
 		for (int assigned = 0; assigned < numberOfH; assigned++) {
 			int i = currentGridPoint / numberOfSites;
@@ -252,6 +254,10 @@ public:
 			grid[i][j].rate =  exp(nd(mersenneEngine));	 
 			grid[i][j].type = Hatom;	 
 			currentGridPoint += 1;
+
+			if (grid[i][j].rate > k1max) k1max =grid[i][j].rate;
+			if (grid[i][j].rate < k1min) k1min =grid[i][j].rate;
+			
 		}
 		for (int assigned = 0; assigned < numberOfH2; assigned++) {
 			int i = currentGridPoint / numberOfSites;
@@ -260,6 +266,8 @@ public:
 			grid[i][j].rate =  exp(nd(mersenneEngine));	 
 			grid[i][j].type = H2mol;	 
 			currentGridPoint += 1;
+			if (grid[i][j].rate > k1max) k1max =grid[i][j].rate;
+			if (grid[i][j].rate < k1min) k1min =grid[i][j].rate;
 		}
 		for (int assigned = 0; assigned < numberOfVac; assigned++) {
 			int i = currentGridPoint / numberOfSites;
@@ -268,6 +276,8 @@ public:
 			grid[i][j].rate =  exp(nd(mersenneEngine));	 
 			grid[i][j].type = Vacancy;	 
 			currentGridPoint += 1;
+			if (grid[i][j].rate > k1max) k1max =grid[i][j].rate;
+			if (grid[i][j].rate < k1min) k1min =grid[i][j].rate;
 		}
 		for (int i =0; i < numberOfSites; i++){
 			shuffle(begin(grid[i]), end(grid[i]), mersenneEngine);
@@ -283,6 +293,9 @@ public:
 	double Keq;
 	double mean;
 	double sigma;
+
+	double k1max;
+	double k1min;
 
 	double totalRate;
 
@@ -315,7 +328,7 @@ public:
 		react(i,j);
 	}
 
-	void print() {
+	void printState() {
 		int n = numberOfSites * numberOfSites;
 		cout << "Number of H: " << numberOfH << endl;
 		cout << "Number of H2: " << numberOfH2 << endl;
@@ -335,6 +348,11 @@ public:
 		}
 	}
 
+	void printToCSV() {
+		int n = numberOfSites * numberOfSites;
+		cout << numberOfVac * 1.0 / n << "," << numberOfH * 1.0 / n << "," << numberOfH2 * 1.0 / n<< endl;	
+	}
+
 	void resetGrid() {
 		normal_distribution<double> nd(mean, sigma);
 		
@@ -346,6 +364,10 @@ public:
 			}
 		}
 
+	}
+
+	void printK1Range() {
+		cout << k1min << " " << k1max << endl;
 	}
 
 
@@ -393,7 +415,7 @@ int main(int argc, char** argv) {
 		kr = krArg.getValue();
 		Keq = KeqArg.getValue();
 		mean = meanArg.getValue();
-		sigma = sigmaArg.getValue();
+		sigma = sqrt(sigmaArg.getValue());
 		numberOfSites = numberOfSitesArg.getValue();
 		
 
@@ -409,14 +431,15 @@ int main(int argc, char** argv) {
 	KMC sim = KMC(numberOfSites, ka, kd, kdiff, kr, Keq, mean, sigma, 0, numberOfSites * numberOfSites, 0);
 	int numberOfMCSteps = 100000000;
 
-	sim.print();
-	cout << endl;
+//	sim.printK1Range();
+
 //	sim.printGrid();
 	for (int i = 0; i < numberOfMCSteps; i++) {
 		sim.KMCstep();
 	}
 
-	sim.print();
+	sim.printToCSV();
+//	sim.printState();
 //	sim.printGrid();
 
 

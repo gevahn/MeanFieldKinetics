@@ -9,6 +9,7 @@
 #include <functional>
 #include <assert.h>
 #include "tclap/CmdLine.h"
+#include <queue>
 
 using namespace TCLAP;
 using namespace std;
@@ -355,14 +356,46 @@ public:
 
 	void resetGrid() {
 		normal_distribution<double> nd(mean, sigma);
-		
+	        int currentGridPoint = 0;
+                k1max = 0;
+                k1min = exp(mean);
 
-		for(int i; i < numberOfSites; i++) {
-			for(int j; j < numberOfSites; j++) {
-				grid[i][j].rate = nd(mersenneEngine);
-				
-			}
-		}
+                for (int assigned = 0; assigned < numberOfH; assigned++) {
+                        int i = currentGridPoint / numberOfSites;
+                        int j = currentGridPoint % numberOfSites;
+                        grid[i][j].reaction = &KMC::Hreaction;
+                        grid[i][j].rate =  exp(nd(mersenneEngine));
+                        grid[i][j].type = Hatom;
+                        currentGridPoint += 1;
+
+                        if (grid[i][j].rate > k1max) k1max =grid[i][j].rate;
+                        if (grid[i][j].rate < k1min) k1min =grid[i][j].rate;
+
+                }
+                for (int assigned = 0; assigned < numberOfH2; assigned++) {
+                        int i = currentGridPoint / numberOfSites;
+                        int j = currentGridPoint % numberOfSites;
+                        grid[i][j].reaction = &KMC::H2reaction;
+                        grid[i][j].rate =  exp(nd(mersenneEngine));
+                        grid[i][j].type = H2mol;
+                        currentGridPoint += 1;
+                        if (grid[i][j].rate > k1max) k1max =grid[i][j].rate;
+                        if (grid[i][j].rate < k1min) k1min =grid[i][j].rate;
+                }
+                for (int assigned = 0; assigned < numberOfVac; assigned++) {
+                        int i = currentGridPoint / numberOfSites;
+                        int j = currentGridPoint % numberOfSites;
+                        grid[i][j].reaction = &KMC::Vacreaction;
+                        grid[i][j].rate =  exp(nd(mersenneEngine));
+                        grid[i][j].type = Vacancy;
+                        currentGridPoint += 1;
+                        if (grid[i][j].rate > k1max) k1max =grid[i][j].rate;
+                        if (grid[i][j].rate < k1min) k1min =grid[i][j].rate;
+                }
+                for (int i =0; i < numberOfSites; i++){
+                        shuffle(begin(grid[i]), end(grid[i]), mersenneEngine);
+                }
+                shuffle(begin(grid), end(grid), mersenneEngine);
 
 	}
 
@@ -415,7 +448,7 @@ int main(int argc, char** argv) {
 		kr = krArg.getValue();
 		Keq = KeqArg.getValue();
 		mean = meanArg.getValue();
-		sigma = sqrt(sigmaArg.getValue());
+		sigma = sigmaArg.getValue();
 		numberOfSites = numberOfSitesArg.getValue();
 		
 
@@ -429,16 +462,79 @@ int main(int argc, char** argv) {
 
 
 	KMC sim = KMC(numberOfSites, ka, kd, kdiff, kr, Keq, mean, sigma, 0, numberOfSites * numberOfSites, 0);
-	int numberOfMCSteps = 100000000;
+	int numberOfMCSteps = 10000000;
+	int numberOfStepsToAvg = 3000;
 
-//	sim.printK1Range();
+	
 
-//	sim.printGrid();
-	for (int i = 0; i < numberOfMCSteps; i++) {
-		sim.KMCstep();
+	double siteHAverage = 0;
+	double siteH2Average = 0;
+	double siteVacAverage = 0;
+
+
+	double currentSiteAvg = 0.001;
+	double prevSiteAvg = 1;
+
+	double siteResidue = 0.00001;
+	double timeResidue = 0.001;
+
+	int siteAvgNumber = 0;
+
+	while (abs(currentSiteAvg - prevSiteAvg)/prevSiteAvg > siteResidue) {
+		sim.resetGrid();
+		for (int i = 0; i < numberOfMCSteps; i++) {
+			sim.KMCstep();
+		}
+
+//		sim.printToCSV();
+		siteAvgNumber++;
+
+		double timeHAverage = 0;
+		double timeH2Average = 0;
+		double timeVacAverage = 0;
+
+		double currentTimeAvg = 0.01;
+		double prevTimeAvg = 1;
+		
+				
+		while (abs(currentTimeAvg - prevTimeAvg)/prevTimeAvg > timeResidue) {
+			timeHAverage = 0;
+			timeH2Average = 0;
+			timeVacAverage = 0;
+			for (int i = 0; i < numberOfStepsToAvg; i++) {
+				sim.KMCstep();
+				timeHAverage += sim.numberOfH * 1.0 / (numberOfSites * numberOfSites);
+				timeH2Average += sim.numberOfH2 * 1.0/ (numberOfSites * numberOfSites);
+				timeVacAverage += sim.numberOfVac * 1.0/ (numberOfSites * numberOfSites);
+			}
+			timeHAverage /= numberOfStepsToAvg;
+			timeH2Average /= numberOfStepsToAvg;
+			timeVacAverage /= numberOfStepsToAvg;
+			
+			prevTimeAvg = currentTimeAvg;
+			currentTimeAvg = timeH2Average;
+
+//			cout << "time Residue: " << abs(currentTimeAvg - prevTimeAvg)/prevTimeAvg <<endl;
+		}
+
+		siteHAverage += timeHAverage;
+		siteH2Average += timeH2Average;
+		siteVacAverage += timeVacAverage;
+
+//		cout << siteVacAverage / siteAvgNumber << "," << siteHAverage / siteAvgNumber << "," << siteH2Average / siteAvgNumber << endl;
+
+		prevSiteAvg = currentSiteAvg;
+		currentSiteAvg = siteH2Average / siteAvgNumber;
+
+		
+//		cout << "site Residue: " << abs(currentSiteAvg - prevSiteAvg)/prevSiteAvg <<endl;
+
 	}
+	
+	cout << siteVacAverage / siteAvgNumber << "," << siteHAverage / siteAvgNumber << "," << siteH2Average / siteAvgNumber << endl;
 
-	sim.printToCSV();
+
+//	sim.printToCSV();
 //	sim.printState();
 //	sim.printGrid();
 

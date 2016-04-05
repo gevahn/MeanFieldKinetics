@@ -461,11 +461,11 @@ int main(int argc, char** argv) {
 //	KMC(int _numberOfSites, double _ka, double _kd, double _kdiff, double _kr, double _Keq, double _Keq, double _sigma, int _numberOfH, int _numberOfVac, int _numberOfH2) {
 
 
-	KMC sim = KMC(numberOfSites, ka, kd, kdiff, kr, Keq, mean, sigma, 0, numberOfSites * numberOfSites, 0);
-	int numberOfMCSteps = 10000000;
-	int numberOfStepsToAvg = 3000;
+	KMC sim = KMC(numberOfSites, ka, kd, kdiff, kr, Keq, mean, sqrt(sigma), 0, numberOfSites * numberOfSites, 0);
+	int numberOfMCSteps = 10*1000*1000;
+	int numberOfStepsToAvg = 10000;
 
-	
+	sim.printK1Range();
 
 	double siteHAverage = 0;
 	double siteH2Average = 0;
@@ -475,7 +475,7 @@ int main(int argc, char** argv) {
 	double currentSiteAvg = 0.001;
 	double prevSiteAvg = 1;
 
-	double siteResidue = 0.00001;
+	double siteResidue = 0.0001;
 	double timeResidue = 0.001;
 
 	int siteAvgNumber = 0;

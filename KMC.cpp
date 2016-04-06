@@ -87,21 +87,37 @@ public:
 		}
 
 		// recombination
-		rateSoFar += grid[i][j].rate * NNlist[Hatom].size();
-		if (randRate< rateSoFar) {			
-			grid[i][j].reaction = &KMC::Vacreaction;
-			grid[i][j].type = Vacancy;
-			uniform_int_distribution<int> dn(0,NNlist[Hatom].size() - 1);	
-			int chooseSite = dn(mersenneEngine);
-			NNlist[Hatom][chooseSite]->reaction = &KMC::H2reaction;
-			NNlist[Hatom][chooseSite]->type = H2mol;
+		double highestK1 = grid[i][j].rate;
+		Site* activeSite = &grid[i][j];
+		for (auto site : NNlist[Hatom]) {
+			if (site->rate > highestK1) {
+				highestK1 = site->rate;
+				activeSite = site;
+			}
+		}
+		rateSoFar += highestK1;
+		if (randRate< rateSoFar) {
+			if (activeSite == &grid[i][j]) {			
+				activeSite->reaction = &KMC::H2reaction;
+				activeSite->type = H2mol;
+	                        uniform_int_distribution<int> dn(0,NNlist[Hatom].size() - 1);
+        	                int chooseSite = dn(mersenneEngine);
+				NNlist[Hatom][chooseSite]->reaction = &KMC::Vacreaction;
+				NNlist[Hatom][chooseSite]->type = Vacancy;
+			} else {
+				activeSite->reaction = &KMC::H2reaction;
+				activeSite->type = H2mol;
+	                        grid[i][j].reaction = &KMC::Vacreaction;
+        	                grid[i][j].type = Vacancy;
+
+			}
 
 			numberOfH -= 2;
 			numberOfH2 += 1;
 			numberOfVac += 1;
 			return;
-
 		}
+	
 		numberOfNullSteps += 1;
 
 		return;
@@ -232,7 +248,7 @@ public:
 		sigma = _sigma;	
 
 //		double rates[] = {8*kdiff+ka,kd+8*kdiff+8*kr
-		totalRate = 8* (kdiff+ka+kd+kr+exp(mean));
+		totalRate = 8* (kdiff) +ka+kd;
 
 		numberOfH = _numberOfH;	
 		numberOfVac = _numberOfVac;	
@@ -465,7 +481,7 @@ int main(int argc, char** argv) {
 	int numberOfMCSteps = 10*1000*1000;
 	int numberOfStepsToAvg = 10000;
 
-	sim.printK1Range();
+//	sim.printK1Range();
 
 	double siteHAverage = 0;
 	double siteH2Average = 0;

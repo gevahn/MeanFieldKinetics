@@ -95,7 +95,7 @@ public:
 				activeSite = site;
 			}
 		}
-		rateSoFar += highestK1;
+		rateSoFar += highestK1 * !(!(NNlist[Hatom].size()));
 		if (randRate< rateSoFar) {
 			if (activeSite == &grid[i][j]) {			
 				activeSite->reaction = &KMC::H2reaction;

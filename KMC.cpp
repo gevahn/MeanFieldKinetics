@@ -155,21 +155,37 @@ public:
                 }
 */
                 // dissociation
-                rateSoFar += grid[i][j].rate/Keq*NNlist[Vacancy].size();
-                if (randRate< rateSoFar) {
-                        grid[i][j].reaction = &KMC::Hreaction;
-                        grid[i][j].type = Hatom;
-                        uniform_int_distribution<int> dn(0,NNlist[Vacancy].size() - 1);
-                        int chooseSite = dn(mersenneEngine);
-                        NNlist[Vacancy][chooseSite]->reaction = &KMC::Hreaction;
-                        NNlist[Vacancy][chooseSite]->type = Hatom;
-
-			numberOfH2 -= 1;
-			numberOfH += 2;
-			numberOfVac -= 1;
-			return;
-
+		double highestK1 = grid[i][j].rate / Keq;
+                Site* activeSite = &grid[i][j];
+                for (auto site : NNlist[Vacancy]) {
+                        if (site->rate > highestK1) {
+                                highestK1 = site->rate;
+                                activeSite = site;
+                        }
                 }
+                rateSoFar += highestK1 * !(!(NNlist[Vacancy].size()));
+                if (randRate< rateSoFar) {
+                        if (activeSite == &grid[i][j]) {
+                                activeSite->reaction = &KMC::Hreaction;
+                                activeSite->type = Hatom;
+                                uniform_int_distribution<int> dn(0,NNlist[Vacancy].size() - 1);
+                                int chooseSite = dn(mersenneEngine);
+                                NNlist[Hatom][chooseSite]->reaction = &KMC::Hreaction;
+                                NNlist[Hatom][chooseSite]->type = Hatom;
+                        } else {
+                                activeSite->reaction = &KMC::Hreaction;
+                                activeSite->type = Hatom;
+                                grid[i][j].reaction = &KMC::Hreaction;
+                                grid[i][j].type = Hatom;
+
+                        }
+
+                        numberOfH -= 2;
+                        numberOfH2 += 1;
+                        numberOfVac += 1;
+                        return;
+                }
+
 		numberOfNullSteps += 1;
 
                 return;
@@ -209,19 +225,35 @@ public:
                 }
 
                 // dissociation
-                rateSoFar += grid[i][j].rate/Keq*NNlist[H2mol].size();
+                double highestK1 = grid[i][j].rate / Keq;
+                Site* activeSite = &grid[i][j];
+                for (auto site : NNlist[Vacancy]) {
+                        if (site->rate > highestK1) {
+                                highestK1 = site->rate;
+                                activeSite = site;
+                        }
+                }
+                rateSoFar += highestK1 * !(!(NNlist[H2mol].size()));
                 if (randRate< rateSoFar) {
-                        grid[i][j].reaction = &KMC::Hreaction;
-                        grid[i][j].type = Hatom;
-                        uniform_int_distribution<int> dn(0,NNlist[H2mol].size() - 1);
-                        int chooseSite = dn(mersenneEngine);
-                        NNlist[H2mol][chooseSite]->reaction = &KMC::Hreaction;
-                        NNlist[H2mol][chooseSite]->type = Hatom;
+                        if (activeSite == &grid[i][j]) {
+                                activeSite->reaction = &KMC::Hreaction;
+                                activeSite->type = Hatom;
+                                uniform_int_distribution<int> dn(0,NNlist[H2mol].size() - 1);
+                                int chooseSite = dn(mersenneEngine);
+                                NNlist[Hatom][chooseSite]->reaction = &KMC::Hreaction;
+                                NNlist[Hatom][chooseSite]->type = Hatom;
+                        } else {
+                                activeSite->reaction = &KMC::Hreaction;
+                                activeSite->type = Hatom;
+                                grid[i][j].reaction = &KMC::Hreaction;
+                                grid[i][j].type = Hatom;
 
-			numberOfVac -= 1;
-			numberOfH += 2;
-			numberOfH2 -= 1;
-			return;
+                        }
+
+                        numberOfH += 2;
+                        numberOfH2 -= 1;
+                        numberOfVac -= 1;
+                        return;
                 }
 		numberOfNullSteps += 1;
                 return;

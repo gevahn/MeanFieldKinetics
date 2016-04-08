@@ -158,20 +158,21 @@ public:
 		double highestK1 = grid[i][j].rate / Keq;
                 Site* activeSite = &grid[i][j];
                 for (auto site : NNlist[Vacancy]) {
-                        if (site->rate > highestK1) {
-                                highestK1 = site->rate;
+                        if (site->rate / Keq > highestK1) {
+                                highestK1 = site->rate / Keq;
                                 activeSite = site;
                         }
                 }
                 rateSoFar += highestK1 * !(!(NNlist[Vacancy].size()));
                 if (randRate< rateSoFar) {
                         if (activeSite == &grid[i][j]) {
+				cout << "meow";
                                 activeSite->reaction = &KMC::Hreaction;
                                 activeSite->type = Hatom;
                                 uniform_int_distribution<int> dn(0,NNlist[Vacancy].size() - 1);
                                 int chooseSite = dn(mersenneEngine);
-                                NNlist[Hatom][chooseSite]->reaction = &KMC::Hreaction;
-                                NNlist[Hatom][chooseSite]->type = Hatom;
+                                NNlist[Vacancy][chooseSite]->reaction = &KMC::Hreaction;
+                                NNlist[Vacancy][chooseSite]->type = Hatom;
                         } else {
                                 activeSite->reaction = &KMC::Hreaction;
                                 activeSite->type = Hatom;
@@ -180,9 +181,9 @@ public:
 
                         }
 
-                        numberOfH -= 2;
-                        numberOfH2 += 1;
-                        numberOfVac += 1;
+                        numberOfH += 2;
+                        numberOfH2 -= 1;
+                        numberOfVac -= 1;
                         return;
                 }
 
@@ -227,9 +228,9 @@ public:
                 // dissociation
                 double highestK1 = grid[i][j].rate / Keq;
                 Site* activeSite = &grid[i][j];
-                for (auto site : NNlist[Vacancy]) {
-                        if (site->rate > highestK1) {
-                                highestK1 = site->rate;
+                for (auto site : NNlist[H2mol]) {
+                        if (site->rate / Keq > highestK1 ) {
+                                highestK1 = site->rate / Keq;
                                 activeSite = site;
                         }
                 }
@@ -240,8 +241,8 @@ public:
                                 activeSite->type = Hatom;
                                 uniform_int_distribution<int> dn(0,NNlist[H2mol].size() - 1);
                                 int chooseSite = dn(mersenneEngine);
-                                NNlist[Hatom][chooseSite]->reaction = &KMC::Hreaction;
-                                NNlist[Hatom][chooseSite]->type = Hatom;
+                                NNlist[H2mol][chooseSite]->reaction = &KMC::Hreaction;
+                                NNlist[H2mol][chooseSite]->type = Hatom;
                         } else {
                                 activeSite->reaction = &KMC::Hreaction;
                                 activeSite->type = Hatom;
@@ -270,6 +271,7 @@ public:
 	KMC(int _numberOfSites, double _ka, double _kd, double _kdiff, double _kr, double _Keq, double _mean, double _sigma, int _numberOfH, int _numberOfVac, int _numberOfH2) {
 		numberOfSites = _numberOfSites;
 
+		
 		grid = vector< vector< Site>>(numberOfSites, vector<Site>(numberOfSites));
 		ka = _ka;	
 		kd = _kd;	
@@ -407,6 +409,7 @@ public:
 	        int currentGridPoint = 0;
                 k1max = 0;
                 k1min = exp(mean);
+
 
                 for (int assigned = 0; assigned < numberOfH; assigned++) {
                         int i = currentGridPoint / numberOfSites;

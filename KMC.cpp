@@ -166,7 +166,6 @@ public:
                 rateSoFar += highestK1 * !(!(NNlist[Vacancy].size()));
                 if (randRate< rateSoFar) {
                         if (activeSite == &grid[i][j]) {
-				cout << "meow";
                                 activeSite->reaction = &KMC::Hreaction;
                                 activeSite->type = Hatom;
                                 uniform_int_distribution<int> dn(0,NNlist[Vacancy].size() - 1);
@@ -335,6 +334,8 @@ public:
 		}
 		shuffle(begin(grid), end(grid), mersenneEngine);
 
+		if (totalRate < k1max + totalRate) totalRate += k1max;
+
 	}
 	//rates
 	double ka;
@@ -360,6 +361,8 @@ public:
         int numberOfH;
         int numberOfVac;
         int numberOfH2;
+
+	double avgHNN;
 	
 	mt19937 mersenneEngine;	
 	uniform_real_distribution<double> dist;
@@ -513,7 +516,7 @@ int main(int argc, char** argv) {
 
 
 	KMC sim = KMC(numberOfSites, ka, kd, kdiff, kr, Keq, mean, sqrt(sigma), 0, numberOfSites * numberOfSites, 0);
-	int numberOfMCSteps = 10*1000*1000;
+	int numberOfMCSteps = 100*1000*1000;
 	int numberOfStepsToAvg = 10000;
 
 //	sim.printK1Range();

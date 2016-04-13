@@ -525,6 +525,9 @@ int main(int argc, char** argv) {
 	double siteH2Average = 0;
 	double siteVacAverage = 0;
 
+	double siteHStd = 0;
+	double siteH2Std = 0;
+	double siteVacStd = 0;
 
 	double currentSiteAvg = 0.001;
 	double prevSiteAvg = 1;
@@ -575,6 +578,10 @@ int main(int argc, char** argv) {
 		siteH2Average += timeH2Average;
 		siteVacAverage += timeVacAverage;
 
+		siteHStd = timeHAverage * timeHAverage;
+		siteH2Std = timeH2Average * timeH2Average;
+		siteVacStd = timeVacAverage * timeVacAverage;
+
 //		cout << siteVacAverage / siteAvgNumber << "," << siteHAverage / siteAvgNumber << "," << siteH2Average / siteAvgNumber << endl;
 
 		prevSiteAvg = currentSiteAvg;
@@ -585,7 +592,11 @@ int main(int argc, char** argv) {
 
 	}
 	
-	cout << siteVacAverage / siteAvgNumber << "," << siteHAverage / siteAvgNumber << "," << siteH2Average / siteAvgNumber << endl;
+	cout << siteVacAverage / siteAvgNumber << "," << siteHAverage / siteAvgNumber << "," << siteH2Average / siteAvgNumber << ",";
+
+	cout << sqrt(siteAvgNumber * siteHStd - siteHAverage * siteHAverage) / siteAvgNumber << ",";
+	cout << sqrt(siteAvgNumber * siteH2Std - siteH2Average * siteH2Average) / siteAvgNumber << ",";
+	cout << sqrt(siteAvgNumber * siteVacStd - siteVacAverage * siteVacAverage) / siteAvgNumber << endl;
 
 
 //	sim.printToCSV();
